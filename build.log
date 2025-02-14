@@ -1,0 +1,8 @@
+make: secgetspf: No such file or directory
+***
+*** Configuration file ".config" not found!
+***
+*** Please run some configurator (e.g. "make oldconfig" or
+*** "make menuconfig" or "make xconfig").
+***
+make: *** [Makefile:722: .config] Error 1

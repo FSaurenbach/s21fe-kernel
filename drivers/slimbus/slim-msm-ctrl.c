@@ -17,7 +17,6 @@
 #include <linux/pm_runtime.h>
 #include <linux/of.h>
 #include <linux/msm-sps.h>
-#include <linux/qdsp6v2/apr.h>
 #include "slim-msm.h"
 
 #define MSM_SLIM_NAME	"msm_slim_ctrl"

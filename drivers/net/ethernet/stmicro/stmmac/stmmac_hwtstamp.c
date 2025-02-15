@@ -13,7 +13,7 @@
 #include <linux/delay.h>
 #include "common.h"
 #include "stmmac_ptp.h"  // Include the stmmac_ptp.h header file
-
+#define PTP_SSIR_SSINC_MASK 0xFFFF
 static void config_hw_tstamping(void __iomem *ioaddr, u32 data)
 {
 	writel(data, ioaddr + PTP_TCR);

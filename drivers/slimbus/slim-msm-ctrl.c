@@ -18,7 +18,6 @@
 #include <linux/of.h>
 #include <linux/msm-sps.h>
 #include "slim-msm.h"
-#include <linux/qcom/q6state.h>
 #define MSM_SLIM_NAME	"msm_slim_ctrl"
 #define SLIM_ROOT_FREQ 24576000
 
@@ -1206,7 +1205,15 @@ static void msm_slim_hw_init(struct msm_slim_ctrl *dev)
 	mb();
 
 }
-
+enum apr_subsys_state {
+    APR_SUBSYS_DOWN,
+    APR_SUBSYS_UP,
+    // Add other states if necessary
+};
+enum apr_subsys_state apr_get_q6_state(void) {
+    // Implement the function or use a stub
+    return APR_SUBSYS_UP; // Example return value
+}
 static int msm_slim_probe(struct platform_device *pdev)
 {
 	struct msm_slim_ctrl	*dev;

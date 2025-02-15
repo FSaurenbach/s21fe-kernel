@@ -34,7 +34,7 @@ CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} clean
 make -j8 -C $(pwd) O=$(pwd)/out ${ARGS} mrproper
 make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} vendor/r9q_eur_openx_defconfig
-make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} -j8
+ccache make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} -j8
 
 # ---- COLLECT MODULES ---- #
 mkdir -p modules

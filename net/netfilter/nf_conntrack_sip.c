@@ -103,7 +103,7 @@ static struct ctl_table sip_sysctl_tbl[] = {
 	{}
 };
 
-static unsigned int (*nf_nat_sip_hook)
+unsigned int (*nf_nat_sip_hook)
 					(struct sk_buff *skb,
 					unsigned int protoff,
 					unsigned int dataoff,

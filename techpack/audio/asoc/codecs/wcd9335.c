@@ -41,7 +41,7 @@
 #include "wcd_cpe_core.h"
 #include <asoc/wcdcal-hwdep.h>
 #include <asoc/wcd-mbhc-v2-api.h>
-#include <techpack/audio/include/asoc/core.h>
+#include <asoc/core.h>
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>

@@ -12,7 +12,7 @@
 #include <linux/io.h>
 #include <linux/delay.h>
 #include "common.h"
-#include "stmmac_ptp.h"
+#include "stmmac_ptp.h"  // Include the stmmac_ptp.h header file
 
 static void config_hw_tstamping(void __iomem *ioaddr, u32 data)
 {
@@ -53,8 +53,8 @@ static void config_sub_second_increment(void __iomem *ioaddr,
 	sns_inc &= PTP_SSIR_SNSINC_MASK;
 
 	reg_value = ss_inc;
-	if (data > PTP_SSIR_SSINC_MAX)
-		data = PTP_SSIR_SSINC_MAX;
+	if (ss_inc > PTP_SSIR_SSINC_MAX)
+		ss_inc = PTP_SSIR_SSINC_MAX;
 
 	if (gmac4)
 		reg_value <<= GMAC4_PTP_SSIR_SSINC_SHIFT;

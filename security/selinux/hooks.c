@@ -102,6 +102,7 @@
 #include "netlabel.h"
 #include "audit.h"
 #include "avc_ss.h"
+int selinux_enforcing = 1;
 
 #ifdef CONFIG_QCOM_RTIC
 struct selinux_state selinux_state __rticdata;

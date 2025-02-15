@@ -25,7 +25,7 @@ LLVM_DIS=llvm-dis
 CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 "
 make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} clean && make -j8 -C $(pwd) O=$(pwd)/out ${ARGS} mrproper
-make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} r9q_eur_openx_defconfig
+make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} vendor/r9q_eur_openx_defconfig
 make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS}
 #to copy all the kernel modules (.ko) to "modules" folder.
 mkdir -p modules

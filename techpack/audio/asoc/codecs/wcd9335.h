@@ -10,9 +10,6 @@
 #include <dsp/apr_audio-v2.h>
 #include <asoc/wcd9xxx-slimslave.h>
 #include <asoc/wcd-mbhc-v2.h>
-#define CONFIG_WCD9XXX_CODEC_CORE
-
-#include <asoc/core.h>
 
 #define TASHA_REG_VAL(reg, val)      {reg, 0, val}
 

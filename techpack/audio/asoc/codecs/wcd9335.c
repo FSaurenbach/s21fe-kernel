@@ -41,7 +41,14 @@
 #include "wcd_cpe_core.h"
 #include <asoc/wcdcal-hwdep.h>
 #include <asoc/wcd-mbhc-v2-api.h>
-
+#include <techpack/audio/include/asoc/core.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <sound/soc.h>
+#include <asoc/wcd9xxx-regmap.h>
+#include "wcd9xxx.h"
+#include "wcd9335.h"
 #define DRV_NAME "tasha_codec"
 
 #define TASHA_RX_PORT_START_NUMBER  16

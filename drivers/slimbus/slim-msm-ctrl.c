@@ -18,7 +18,7 @@
 #include <linux/of.h>
 #include <linux/msm-sps.h>
 #include "slim-msm.h"
-
+#include <linux/qcom/q6state.h>
 #define MSM_SLIM_NAME	"msm_slim_ctrl"
 #define SLIM_ROOT_FREQ 24576000
 
@@ -202,7 +202,7 @@ static irqreturn_t msm_slim_interrupt(int irq, void *d)
 		 * signalling completion/exiting ISR
 		 */
 		mb();
-		msm_slim_manage_tx_msgq(dev, false, NULL);
+		msm_slim_manage_tx_msgq(dev, false, NULL, 0);
 	}
 	if (stat & MGR_INT_RX_MSG_RCVD) {
 		u32 rx_buf[10];
@@ -1291,7 +1291,7 @@ static int msm_slim_probe(struct platform_device *pdev)
 		goto err_of_init_failed;
 	}
 
-	dev->bam.base = devm_ioremap(bam_mem->start, resource_size(bam_mem));
+	dev->bam.base = devm_ioremap(&pdev->dev, bam_mem->start, resource_size(bam_mem));
 	if (!dev->bam.base) {
 		dev_err(&pdev->dev, "BAM IOremap failed\n");
 		ret = -ENOMEM;

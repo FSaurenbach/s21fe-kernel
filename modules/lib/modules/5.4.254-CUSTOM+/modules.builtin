@@ -22,6 +22,7 @@ kernel/fs/nls/nls_utf8.ko
 kernel/fs/pstore/pstore.ko
 kernel/fs/sdfat/sdfat_fs.ko
 kernel/fs/squashfs/squashfs.ko
+kernel/fs/ufs/ufs.ko
 kernel/security/keys/trusted.ko
 kernel/security/keys/encrypted-keys/encrypted-keys.ko
 kernel/crypto/crypto.ko
@@ -174,6 +175,15 @@ kernel/drivers/scsi/virtio_scsi.ko
 kernel/drivers/scsi/sd_mod.ko
 kernel/drivers/scsi/sr_mod.ko
 kernel/drivers/scsi/sg.ko
+kernel/drivers/scsi/ufs/tc-dwc-g210-pci.ko
+kernel/drivers/scsi/ufs/ufshcd-dwc.ko
+kernel/drivers/scsi/ufs/tc-dwc-g210.ko
+kernel/drivers/scsi/ufs/cdns-pltfrm.ko
+kernel/drivers/scsi/ufs/ufshcd-core.ko
+kernel/drivers/scsi/ufs/ufs-debug-stub.ko
+kernel/drivers/scsi/ufs/ufshcd-pci.ko
+kernel/drivers/scsi/ufs/ufshcd-pltfrm.ko
+kernel/drivers/scsi/ufs/ufshcd-crypto-qti.ko
 kernel/drivers/slimbus/slimbus.ko
 kernel/drivers/soundwire/soundwire-bus.ko
 kernel/drivers/tty/serdev/serdev.ko

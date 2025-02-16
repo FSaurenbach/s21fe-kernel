@@ -6,7 +6,13 @@ export ARCH=arm64
 export PLATFORM_VERSION=14
 export ANDROID_MAJOR_VERSION=u
 
-# Symlink python2 for older kernel scripts
+# Enable ccache properly
+export USE_CCACHE=1
+export CCACHE_DIR=$HOME/.ccache
+export CC="ccache clang"
+export CXX="ccache clang++"
+
+# Symlink python2 for older kernel scripts (remove if unnecessary)
 ln -sf /usr/bin/python2.7 $HOME/python
 export PATH=$HOME/:$HOME/toolchains/neutron-clang/bin:$PATH
 
@@ -31,21 +37,21 @@ CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 "
 
 # ---- BUILD KERNEL ---- #
-make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} clean
-make -j8 -C $(pwd) O=$(pwd)/out ${ARGS} mrproper
 make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} vendor/r9q_eur_openx_defconfig
-ccache make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} -j8
+make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS}
+
+# ---- INSTALL MODULES (STRIPPED) ---- #
+make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} INSTALL_MOD_PATH=$(pwd)/modules INSTALL_MOD_STRIP=1 modules_install DEPMOD=/bin/true
+
 
 # ---- COLLECT MODULES ---- #
-mkdir -p modules
-find . -type f -name "*.ko" -exec cp -n {} modules \;
-echo "Module files copied to the 'modules' folder."
+mkdir -p modules_flat
+find ./modules -type f -name "*.ko" -exec cp {} modules_flat/ \;
+echo "Module files copied to the 'modules_flat' folder."
 
 # ---- ANYKERNEL3 ZIP CREATION ---- #
-
 ZIP_DIR="$(pwd)/AnyKernel3"
 MOD_DIR="$ZIP_DIR/modules/vendor/lib/modules"
-K_MOD_DIR="$(pwd)/out/modules"
 
 # Clone AnyKernel3 if it doesn't exist
 if [ ! -d "AnyKernel3" ]; then
@@ -57,11 +63,18 @@ rm -rf $ZIP_DIR/modules/
 mkdir -p $MOD_DIR
 
 # Copy modules into AnyKernel3
-find ./out -type f -name "*.ko" -exec cp {} $MOD_DIR/ \;
+cp -r modules_flat/* $MOD_DIR/
 
-# Copy Kernel Image & DTBO (optional)
+# Copy Kernel Image
 cp ./out/arch/arm64/boot/Image $ZIP_DIR/
-cp ./out/arch/arm64/boot/dtbo.img $ZIP_DIR/
+
+# Copy DTBO (use stock fallback if needed)
+if [ -f ./out/arch/arm64/boot/dtbo.img ]; then
+    cp ./out/arch/arm64/boot/dtbo.img $ZIP_DIR/
+else
+    echo "Using stock dtbo.img (make sure you have it!)"
+    cp ./stock_dtbo.img $ZIP_DIR/
+fi
 
 # Create ZIP package
 ZIP_NAME="sauronskernel_r9q_$(date +%d%m%y-%H%M).zip"

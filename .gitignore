@@ -1,0 +1,9 @@
+# Ignore all .zip files
+*.zip
+
+# Ignore AnyKernel3 folder
+AnyKernel3/
+
+# Ignore out folder
+out/
+

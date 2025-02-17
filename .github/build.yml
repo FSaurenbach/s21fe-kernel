@@ -33,14 +33,17 @@ jobs:
         run: |
           export KERNEL_DIR="$(pwd)"
           mkdir -p "$HOME/toolchains/neutron-clang"; cd "$HOME/toolchains/neutron-clang"
-          curl -LO "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"; chmod +x antman; ./antman -S; ./antman --patch=glibc
+          git clone https://github.com/kdrag0n/proton-clang.git --depth=1
+          ls
+          cd ..
+          ls
           cd "$KERNEL_DIR"
 
 
       - name: Build Kernel Clean
         run: |
           source ./build_proton.sh
-          cp ./AnyKernel3/AQUA* ./
+          
 
 #      - name: Clean Kernel Source
 #        run: |

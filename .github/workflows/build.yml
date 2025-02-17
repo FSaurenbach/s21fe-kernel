@@ -37,12 +37,14 @@ jobs:
           ls
           cd ..
           ls
+          cd ..
+          ls
           cd "$KERNEL_DIR"
 
 
       - name: Build Kernel Clean
         run: |
-          source ./build_proton.sh
+          source ./build_actions.sh
           
 
 #      - name: Clean Kernel Source

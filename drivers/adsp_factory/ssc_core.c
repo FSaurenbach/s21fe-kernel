@@ -126,6 +126,7 @@ void digital_hall_factory_auto_cal_init_work(struct adsp_data *data)
 	schedule_delayed_work(&data->dhall_cal_work, msecs_to_jiffies(8000));
 }
 #endif
+
 /*
  * send ssr notice to ois mcu
  */
@@ -906,8 +907,7 @@ static void print_sensor_dump(struct adsp_data *data, int sensor)
 		break;
 	}
 }
-
-void print_ssr_history()
+void print_ssr_history(void)
 {
 	int i;
 

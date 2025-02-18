@@ -33,7 +33,7 @@ struct dd_benchmark_result {
 struct dd_benchmark {
 	struct timespec stage[DD_REQ_COUNT];
 };
-
+int dd_is_user_deamon_locked(void);
 struct dd_context {
 	char name[10];	// Informational name
 

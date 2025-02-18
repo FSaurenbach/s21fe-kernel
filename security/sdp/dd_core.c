@@ -911,8 +911,7 @@ int dd_page_crypto(struct dd_info *info, dd_crypto_direction_t dir,
 unsigned int dd_lock_state = 1; // 1: locked 0: unlocked
 module_param_named(lock_state, dd_lock_state, uint, 0600);
 MODULE_PARM_DESC(lock_state, "ddar lock status");
-
-int dd_is_user_deamon_locked() {
+int dd_is_user_deamon_locked(void) {
 	return dd_lock_state;
 }
 

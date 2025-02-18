@@ -172,5 +172,5 @@ config F2FS_SEC_SUPPORT_DNODE_RELOCATION
 	depends on F2FS_FS_COMPRESSION
 	default y
 	help
-	  Support DNODE relocation for supporting inline compresseion
+	  Support DNODE relocation for supporting inline compression
 	  on existing files.

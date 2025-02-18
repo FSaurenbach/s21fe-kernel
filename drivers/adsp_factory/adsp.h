@@ -46,6 +46,7 @@
 #define LSM6DSO_SELFTEST_TRUE 3
 #define LSM6DSO_SELFTEST_FALSE 4
 #endif
+void print_ssr_history(void);  // function prototype
 
 enum {
 	D_FACTOR,

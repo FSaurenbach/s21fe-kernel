@@ -35,6 +35,10 @@ LLVM_AR=llvm-ar
 LLVM_DIS=llvm-dis
 CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 "
+export KBUILD_CFLAGS="-Wno-error"
+export KBUILD_CFLAGS="-Wno-vla-extension"
+
+
 rm -fr out
 rm -fr AnyKernel3
 # ---- BUILD KERNEL ---- #

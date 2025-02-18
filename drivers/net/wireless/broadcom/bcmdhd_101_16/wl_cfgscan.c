@@ -59,6 +59,7 @@
 #include <wl_cfgp2p.h>
 #include <wl_cfgvif.h>
 #include <bcmdevs.h>
+#include <stddef.h> // for offsetof, if needed
 
 #include <wl_android.h>
 
@@ -4202,6 +4203,11 @@ static s32
 wl_notify_sched_scan_results(struct bcm_cfg80211 *cfg, struct net_device *ndev,
 	const wl_event_msg_t *e, void *data)
 {
+        STATIC_ASSERT(sizeof(wl_pfn_net_info_v1_t) == sizeof(wl_pfn_net_info_v2_t));
+	STATIC_ASSERT(sizeof(wl_pfn_lnet_info_v1_t) == sizeof(wl_pfn_lnet_info_v2_t));
+	STATIC_ASSERT(sizeof(wl_pfn_subnet_info_v1_t) == sizeof(wl_pfn_subnet_info_v2_t));
+	static_assert(offsetof(wl_pfn_subnet_info_v1_t, SSID) ==
+              offsetof(wl_pfn_subnet_info_v2_t, u.SSID));
 	wl_pfn_net_info_v1_t *netinfo, *pnetinfo;
 	wl_pfn_net_info_v2_t *netinfo_v2, *pnetinfo_v2;
 	struct wiphy *wiphy	= bcmcfg_to_wiphy(cfg);
@@ -4228,11 +4234,7 @@ wl_notify_sched_scan_results(struct bcm_cfg80211 *cfg, struct net_device *ndev,
 	 * in size and SSID offset, allowing v1 to be used below except for the results
 	 * fields themselves (status, count, offset to netinfo).
 	 */
-	STATIC_ASSERT(sizeof(wl_pfn_net_info_v1_t) == sizeof(wl_pfn_net_info_v2_t));
-	STATIC_ASSERT(sizeof(wl_pfn_lnet_info_v1_t) == sizeof(wl_pfn_lnet_info_v2_t));
-	STATIC_ASSERT(sizeof(wl_pfn_subnet_info_v1_t) == sizeof(wl_pfn_subnet_info_v2_t));
-	static_assert(offsetof(wl_pfn_subnet_info_v1_t, SSID) ==
-              offsetof(wl_pfn_subnet_info_v2_t, u.SSID));
+	
 
 
 	/* Extract the version-specific items */

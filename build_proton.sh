@@ -35,7 +35,8 @@ LLVM_AR=llvm-ar
 LLVM_DIS=llvm-dis
 CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 "
-
+rm -fr out
+rm -fr AnyKernel3
 # ---- BUILD KERNEL ---- #
 make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS} vendor/r9q_eur_openx_defconfig
 make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS}

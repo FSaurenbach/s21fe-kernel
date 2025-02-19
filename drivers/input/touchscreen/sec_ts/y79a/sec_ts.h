@@ -1011,7 +1011,7 @@ typedef struct {
 	u32 reserved;
 } fw_chunk;
 
-int sec_ts_power(void *data, bool on);
+int sec_ts_power(struct device *dev, bool on);
 int sec_ts_stop_device(struct sec_ts_data *ts);
 int sec_ts_start_device(struct sec_ts_data *ts);
 int sec_ts_set_lowpowermode(struct sec_ts_data *ts, u8 mode);

@@ -9,6 +9,9 @@ export ANDROID_MAJOR_VERSION=u
 # Enable ccache properly
 export USE_CCACHE=1
 export CCACHE_DIR=$HOME/.ccache
+export CCACHE_SIZE="50G"  # or any other value that suits your machine
+export CCACHE_COMPILERCHECK=content
+
 export CC="ccache clang"
 export CXX="ccache clang++"
 
@@ -35,6 +38,7 @@ LLVM_AR=llvm-ar
 LLVM_DIS=llvm-dis
 CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 "
+make -j$(nproc) -C $(pwd) O=$(pwd)/out ${ARGS}
 export KBUILD_CFLAGS="-Wno-error"
 export KBUILD_CFLAGS="-Wno-vla-extension"
 

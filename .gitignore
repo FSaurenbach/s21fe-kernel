@@ -3,7 +3,8 @@
 
 # Ignore AnyKernel3 folder
 AnyKernel3/
-
+scripts/
 # Ignore out folder
 out/
 
+modules/

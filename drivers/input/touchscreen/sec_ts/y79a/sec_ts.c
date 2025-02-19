@@ -20,8 +20,8 @@ bool shutdown_is_on_going_tsp;
 #ifdef USE_POWER_RESET_WORK
 static void sec_ts_reset_work(struct work_struct *work);
 #endif
-//static void sec_ts_read_info_work(struct work_struct *work);
-//static void sec_ts_print_info_work(struct work_struct *work);
+static void sec_ts_read_info_work(struct work_struct *work);
+static void sec_ts_print_info_work(struct work_struct *work);
 
 #ifdef USE_OPEN_CLOSE
 static int sec_ts_input_open(struct input_dev *dev);
@@ -30,7 +30,7 @@ static void sec_ts_input_close(struct input_dev *dev);
 
 int sec_ts_read_information(struct sec_ts_data *ts);
 
-#if 0
+#ifdef CONFIG_INPUT_SEC_SECURE_TOUCH
 static irqreturn_t sec_ts_irq_thread(int irq, void *ptr);
 
 static irqreturn_t secure_filter_interrupt(struct sec_ts_data *ts)
@@ -360,7 +360,7 @@ int sec_ts_i2c_write(struct sec_ts_data *ts, u8 reg, u8 *data, int len)
 				char result[32];
 
 				snprintf(result, sizeof(result), "RESULT=I2C");
-//				sec_cmd_send_event_to_user(&ts->sec, NULL, result);
+				sec_cmd_send_event_to_user(&ts->sec, NULL, result);
 			}
 		}
 	}
@@ -469,7 +469,7 @@ int sec_ts_i2c_read(struct sec_ts_data *ts, u8 reg, u8 *data, int len)
 					char result[32];
 
 					snprintf(result, sizeof(result), "RESULT=I2C");
-//					sec_cmd_send_event_to_user(&ts->sec, NULL, result);
+					sec_cmd_send_event_to_user(&ts->sec, NULL, result);
 				}
 			}
 		}
@@ -731,12 +731,11 @@ static int sec_ts_write_to_sponge(struct sec_ts_data *ts, u8 *data, int len)
 
 static void sec_ts_set_utc_sponge(struct sec_ts_data *ts)
 {
-	struct timespec64 current_time;
+	struct timeval current_time;
 	int ret;
 	u8 data[6] = {SEC_TS_CMD_SPONGE_OFFSET_UTC, 0};
 
-	ktime_get_real_ts64(&current_time);
-
+	do_gettimeofday(&current_time);
 	data[2] = (0xFF & (u8)((current_time.tv_sec) >> 0));
 	data[3] = (0xFF & (u8)((current_time.tv_sec) >> 8));
 	data[4] = (0xFF & (u8)((current_time.tv_sec) >> 16));
@@ -943,12 +942,12 @@ void sec_ts_reinit(struct sec_ts_data *ts)
 	}
 
 	sec_ts_set_custom_library(ts);
-	//sec_ts_set_press_property(ts);
-#if 0
+	sec_ts_set_press_property(ts);
+
 	if (ts->plat_data->support_fod && ts->fod_set_val) {
 		sec_ts_set_fod_rect(ts);
 	}
-#endif
+
 	/* Power mode */
 	if (ts->power_status == SEC_TS_STATE_LPM) {
 		w_data[0] = TO_LOWPOWER_MODE;
@@ -960,11 +959,11 @@ void sec_ts_reinit(struct sec_ts_data *ts)
 		}
 
 		sec_ts_delay(50);
-		//sec_ts_set_aod_rect(ts);
+		sec_ts_set_aod_rect(ts);
 	} else {
 		sec_ts_set_grip_type(ts, ONLY_EDGE_HANDLER);
 
-		//sec_ts_set_external_noise_mode(ts, EXT_NOISE_MODE_MAX);
+		sec_ts_set_external_noise_mode(ts, EXT_NOISE_MODE_MAX);
 
 		if (ts->brush_mode) {
 			input_info(true, &ts->client->dev, "%s: set brush mode\n", __func__);
@@ -1085,8 +1084,8 @@ static void sec_ts_read_event(struct sec_ts_data *ts)
 	char location[SEC_TS_LOCATION_DETECT_SIZE] = { 0, };
 
 	if (ts->power_status == SEC_TS_STATE_LPM) {
-		//wake_lock_timeout(&ts->wakelock, msecs_to_jiffies(500));
-		__pm_wakeup_event(&ts->wakeup_source, msecs_to_jiffies(500));
+		wake_lock_timeout(&ts->wakelock, msecs_to_jiffies(500));
+
 		/* waiting for blsp block resuming, if not occurs i2c error */
 		ret = wait_for_completion_interruptible_timeout(&ts->resume_done, msecs_to_jiffies(500));
 		if (ret == 0) {
@@ -1567,7 +1566,7 @@ static void sec_ts_read_event(struct sec_ts_data *ts)
 
 	if(ts->touch_count == 0 && ts->tsp_temp_data_skip){
 		ts->tsp_temp_data_skip = false;
-		//sec_ts_set_temp(ts, false);
+		sec_ts_set_temp(ts, false);
 		input_err(true, &ts->client->dev, "%s: sec_ts_set_temp, no touch\n", __func__);	
 	}
 }
@@ -1575,7 +1574,7 @@ static void sec_ts_read_event(struct sec_ts_data *ts)
 static irqreturn_t sec_ts_irq_thread(int irq, void *ptr)
 {
 	struct sec_ts_data *ts = (struct sec_ts_data *)ptr;
-	struct timespec64 enter_time, current_time;
+	struct timeval enter_time, current_time;
 	int time_diff, prev_touch_count;
 
 	if (gpio_get_value(ts->plat_data->irq_gpio) == 1)
@@ -1600,15 +1599,13 @@ static irqreturn_t sec_ts_irq_thread(int irq, void *ptr)
 
 	prev_touch_count = ts->touch_count;
 	
-	ktime_get_real_ts64(&enter_time);
-
+	do_gettimeofday(&enter_time);
 	sec_ts_read_event(ts);
-
-	ktime_get_real_ts64(&current_time);
+	do_gettimeofday(&current_time);
 
 	mutex_unlock(&ts->eventlock);
 
-	time_diff = (int)(current_time.tv_sec) - (int)(enter_time.tv_sec);
+	time_diff = (int)(current_time.tv_usec) - (int)(enter_time.tv_usec);
 	if (prev_touch_count > 0 && time_diff > 8000) {
 		input_info(true, &ts->client->dev, "%s : interval: %d\n", __func__, time_diff);
 		if (ts->irq_delay_count < 10000)
@@ -1704,13 +1701,11 @@ void sec_ts_set_grip_type(struct sec_ts_data *ts, u8 set_type)
 		else
 			mode |= G_SET_NORMAL_MODE;
 	}
-#if 0
+
 	if (mode)
 		set_grip_data_to_ic(ts, mode);
-#endif
 }
 
-#if 0
 struct sec_ts_data *g_ts;
 
 static ssize_t sec_ts_tsp_cmoffset_all_read(struct file *file, char __user *buf,
@@ -1961,7 +1956,7 @@ static void sec_ts_init_proc(struct sec_ts_data *ts)
 	return;
 
 err_fail_hist_proc_create:
-	//proc_remove(entry_cmoffset_all);
+	proc_remove(entry_cmoffset_all);
 err_cmoffset_proc_create:
 	kfree(ts->fail_hist_main_proc);
 err_alloc_fail_hist_main:
@@ -1991,7 +1986,6 @@ err_alloc_main:
 
 	input_err(true, &ts->client->dev, "%s: failed\n", __func__);
 }
-#endif
 /* for debugging--------------------------------------------------------------------------------------*/
 static int sec_ts_pinctrl_configure(struct sec_ts_data *ts, bool enable)
 {
@@ -2247,7 +2241,6 @@ static int sec_ts_parse_dt(struct i2c_client *client)
 	return ret;
 }
 
-#if 0
 void sec_tclm_parse_dt(struct i2c_client *client, struct sec_tclm_data *tdata)
 {
 	struct device *dev = &client->dev;
@@ -2267,7 +2260,7 @@ void sec_tclm_parse_dt(struct i2c_client *client, struct sec_tclm_data *tdata)
 
 	input_err(true, &client->dev, "%s: tclm_level %d, sec_afe_base %04X\n", __func__, tdata->tclm_level, tdata->afe_base);
 }
-#endif
+
 int sec_ts_read_information(struct sec_ts_data *ts)
 {
 	unsigned char data[13] = { 0 };
@@ -2392,8 +2385,8 @@ int sec_ts_check_custom_library(struct sec_ts_data *ts)
 			data[5], data[6], data[7], data[8], data[9]);
 
 	sec_ts_set_custom_library(ts);
-	//get_aod_active_area(ts);
-	//get_fod_info(ts);
+	get_aod_active_area(ts);
+	get_fod_info(ts);
 
 	return ret;
 }
@@ -2458,7 +2451,7 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 {
 	struct sec_ts_data *ts;
 	struct sec_ts_plat_data *pdata;
-	//struct sec_tclm_data *tdata = NULL;
+	struct sec_tclm_data *tdata = NULL;
 	int ret = 0;
 	bool force_update = false;
 	bool valid_firmware_integrity = false;
@@ -2490,14 +2483,12 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 			input_err(true, &client->dev, "%s: Failed to parse dt\n", __func__);
 			goto error_allocate_mem;
 		}
-#if 0
 		tdata = devm_kzalloc(&client->dev,
 				sizeof(struct sec_tclm_data), GFP_KERNEL);
 		if (!tdata)
 			goto error_allocate_tdata;
 
 		sec_tclm_parse_dt(client, tdata);
-#endif
 	} else {
 		pdata = client->dev.platform_data;
 		if (!pdata) {
@@ -2530,11 +2521,9 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 	ts->sec_ts_i2c_write_burst = sec_ts_i2c_write_burst;
 	ts->sec_ts_i2c_read_bulk = sec_ts_i2c_read_bulk;
 	ts->i2c_burstmax = pdata->i2c_burstmax;
-#if 0
 	ts->tdata = tdata;
 	if (!ts->tdata)
 		goto err_null_tdata;
-#endif
 
 #ifdef TCLM_CONCEPT
 	sec_tclm_initialize(ts->tdata);
@@ -2548,8 +2537,8 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 #ifdef USE_POWER_RESET_WORK
 	INIT_DELAYED_WORK(&ts->reset_work, sec_ts_reset_work);
 #endif
-	//INIT_DELAYED_WORK(&ts->work_read_info, sec_ts_read_info_work);
-	//INIT_DELAYED_WORK(&ts->work_print_info, sec_ts_print_info_work);
+	INIT_DELAYED_WORK(&ts->work_read_info, sec_ts_read_info_work);
+	INIT_DELAYED_WORK(&ts->work_print_info, sec_ts_print_info_work);
 	INIT_DELAYED_WORK(&ts->work_read_functions, sec_ts_get_touch_function);
 
 	i2c_set_clientdata(client, ts);
@@ -2597,8 +2586,7 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 	mutex_init(&ts->modechange);
 	mutex_init(&ts->sponge_mutex);
 
-	//wake_lock_init(&ts->wakelock, WAKE_LOCK_SUSPEND, "tsp_wakelock");
-	wakeup_source_add(&ts->wakeup_source);
+	wake_lock_init(&ts->wakelock, WAKE_LOCK_SUSPEND, "tsp_wakelock");
 	init_completion(&ts->resume_done);
 	complete_all(&ts->resume_done);
 
@@ -2611,7 +2599,7 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 	if (!pdata->regulator_boot_on)
 		sec_ts_delay(TOUCH_POWER_ON_DWORK_TIME);
 	ts->power_status = SEC_TS_STATE_POWER_ON;
-//	ts->tdata->external_factory = false;
+	ts->tdata->external_factory = false;
 
 	ret = sec_ts_wait_for_ready(ts, SEC_TS_ACK_BOOT_COMPLETE);
 	if (ret < 0) {
@@ -2672,11 +2660,11 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 		force_update = true;
 	else
 		force_update = false;
-#if 0
+
 	ret = sec_ts_firmware_update_on_probe(ts, force_update);
 	if (ret < 0)
 		goto err_init;
-#endif
+
 	ret = sec_ts_read_information(ts);
 	if (ret < 0) {
 		input_err(true, &ts->client->dev, "%s: fail to read information 0x%x\n", __func__, ret);
@@ -2701,7 +2689,7 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 		goto err_allocate_frame;
 	}
 
-	//sec_ts_init_proc(ts);
+	sec_ts_init_proc(ts);
 
 	if (ts->plat_data->support_dex) {
 		ts->input_dev_pad->name = "sec_touchpad";
@@ -2757,9 +2745,9 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 #endif
 	/* need remove below resource @ remove driver */
 #if !defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
-	//sec_ts_raw_device_init(ts);
+	sec_ts_raw_device_init(ts);
 #endif
-	//sec_ts_fn_init(ts);
+	sec_ts_fn_init(ts);
 
 #ifdef CONFIG_INPUT_SEC_SECURE_TOUCH
 	if (sysfs_create_group(&ts->input_dev->dev.kobj, &secure_attr_group) < 0)
@@ -2772,7 +2760,7 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 	device_init_wakeup(&client->dev, true);
 
 	if (!shutdown_is_on_going_tsp)
-		//schedule_delayed_work(&ts->work_read_info, msecs_to_jiffies(50));
+		schedule_delayed_work(&ts->work_read_info, msecs_to_jiffies(50));
 
 #if defined(CONFIG_TOUCHSCREEN_DUMP_MODE)
 	dump_callbacks.inform_dump = dump_tsp_log;
@@ -2781,7 +2769,7 @@ static int sec_ts_probe(struct i2c_client *client, const struct i2c_device_id *i
 #endif
 
 	/* register dev for ltp */
-	//sec_ts_ioctl_init(ts);
+	sec_ts_ioctl_init(ts);
 
 	ts_dup = ts;
 #ifdef CONFIG_INPUT_SEC_SECURE_TOUCH
@@ -2822,8 +2810,7 @@ err_input_register_device:
 	kfree(ts->pFrame);
 err_allocate_frame:
 err_init:
-	//wake_lock_destroy(&ts->wakelock);
-	wakeup_source_destroy(&ts->wakeup_source);
+	wake_lock_destroy(&ts->wakelock);
 	sec_ts_power(ts, false);
 	if (ts->plat_data->support_ear_detect) {
 		if (ts->input_dev_proximity)
@@ -2838,7 +2825,7 @@ err_allocate_input_dev_pad:
 	if (ts->input_dev)
 		input_free_device(ts->input_dev);
 err_allocate_input_dev:
-//err_null_tdata:
+err_null_tdata:
 	kfree(ts);
 
 error_allocate_mem:
@@ -2849,7 +2836,7 @@ error_allocate_mem:
 	if (gpio_is_valid(pdata->tsp_icid))
 		gpio_free(pdata->tsp_icid);
 
-//error_allocate_tdata:
+error_allocate_tdata:
 error_allocate_pdata:
 	if (ret == -ECONNREFUSED)
 		sec_ts_delay(100);
@@ -2994,8 +2981,7 @@ static void sec_ts_reset_work(struct work_struct *work)
 	}
 
 	mutex_lock(&ts->modechange);
-	//wake_lock(&ts->wakelock);
-	__pm_wakeup_event(&ts->wakeup_source, 0);
+	wake_lock(&ts->wakelock);
 
 	ts->reset_is_on_going = true;
 	input_info(true, &ts->client->dev, "%s\n", __func__);
@@ -3017,17 +3003,16 @@ static void sec_ts_reset_work(struct work_struct *work)
 			char result[32];
 
 			snprintf(result, sizeof(result), "RESULT=RESET");
-		//	sec_cmd_send_event_to_user(&ts->sec, NULL, result);
+			sec_cmd_send_event_to_user(&ts->sec, NULL, result);
 		}
 
-		//wake_unlock(&ts->wakelock);
-		__pm_relax(&ts->wakeup_source);
+		wake_unlock(&ts->wakelock);
 
 		return;
 	}
 
-//	if (ts->input_dev_touch->disabled) {
-//		input_err(true, &ts->client->dev, "%s: call input_close\n", __func__);
+	if (ts->input_dev_touch->disabled) {
+		input_err(true, &ts->client->dev, "%s: call input_close\n", __func__);
 
 		if (ts->lowpower_mode || ts->ed_enable) {
 			ret = sec_ts_set_lowpowermode(ts, TO_LOWPOWER_MODE);
@@ -3038,38 +3023,35 @@ static void sec_ts_reset_work(struct work_struct *work)
 				if (!shutdown_is_on_going_tsp)
 					schedule_delayed_work(&ts->reset_work, msecs_to_jiffies(TOUCH_RESET_DWORK_TIME));
 				mutex_unlock(&ts->modechange);
-				//wake_unlock(&ts->wakelock);
-				__pm_relax(&ts->wakeup_source);
+				wake_unlock(&ts->wakelock);
 				return;
 			}
 
-			//sec_ts_set_aod_rect(ts);
+			sec_ts_set_aod_rect(ts);
 		} else {
 			sec_ts_stop_device(ts);
 		}
-
+	}
 
 	ts->reset_is_on_going = false;
 	mutex_unlock(&ts->modechange);
 
 	if (ts->power_status == SEC_TS_STATE_POWER_ON) {
 		if (ts->fix_active_mode)
-			//sec_ts_fix_tmode(ts, TOUCH_SYSTEM_MODE_TOUCH, TOUCH_MODE_STATE_TOUCH);
+			sec_ts_fix_tmode(ts, TOUCH_SYSTEM_MODE_TOUCH, TOUCH_MODE_STATE_TOUCH);
 	}
 
 	if (ts->debug_flag & SEC_TS_DEBUG_SEND_UEVENT) {
 		char result[32];
 
 		snprintf(result, sizeof(result), "RESULT=RESET");
-		//sec_cmd_send_event_to_user(&ts->sec, NULL, result);
+		sec_cmd_send_event_to_user(&ts->sec, NULL, result);
 	}
 
-	//wake_unlock(&ts->wakelock);
-	__pm_relax(&ts->wakeup_source);
+	wake_unlock(&ts->wakelock);
 }
 #endif
 
-#if 0
 static void sec_ts_print_info_work(struct work_struct *work)
 {
 	struct sec_ts_data *ts = container_of(work, struct sec_ts_data,
@@ -3090,8 +3072,7 @@ static void sec_ts_print_info_work(struct work_struct *work)
 	if (!shutdown_is_on_going_tsp)
 		schedule_delayed_work(&ts->work_print_info, msecs_to_jiffies(TOUCH_PRINT_INFO_DWORK_TIME));
 }
-#endif
-#if 0
+
 static void sec_ts_read_info_work(struct work_struct *work)
 {
 	struct sec_ts_data *ts = container_of(work, struct sec_ts_data,
@@ -3135,13 +3116,12 @@ static void sec_ts_read_info_work(struct work_struct *work)
 		input_err(true, &ts->client->dev, "%s done, do not run work\n", __func__);
 		return;
 	}
-#if 0
+
 	if (!shutdown_is_on_going_tsp)
 		schedule_work(&ts->work_print_info.work);
-#endif
 
 }
-#endif
+
 int sec_ts_set_lowpowermode(struct sec_ts_data *ts, u8 mode)
 {
 	int ret;
@@ -3253,19 +3233,17 @@ static int sec_ts_input_open(struct input_dev *dev)
 	}
 
 	if (ts->fix_active_mode)
-		//sec_ts_fix_tmode(ts, TOUCH_SYSTEM_MODE_TOUCH, TOUCH_MODE_STATE_TOUCH);
+		sec_ts_fix_tmode(ts, TOUCH_SYSTEM_MODE_TOUCH, TOUCH_MODE_STATE_TOUCH);
 
-	//sec_ts_set_temp(ts, true);
+	sec_ts_set_temp(ts, true);
 
 	mutex_unlock(&ts->modechange);
 
-	//cancel_delayed_work(&ts->work_print_info);
+	cancel_delayed_work(&ts->work_print_info);
 	ts->print_info_cnt_open = 0;
 	ts->print_info_cnt_release = 0;
-#if 0	
 	if (!shutdown_is_on_going_tsp)
 		schedule_work(&ts->work_print_info.work);
-#endif
 	return 0;
 }
 
@@ -3293,7 +3271,7 @@ static void sec_ts_input_close(struct input_dev *dev)
 #ifdef MINORITY_REPORT
 	minority_report_sync_latest_value(ts);
 #endif
-	//cancel_delayed_work(&ts->work_print_info);
+	cancel_delayed_work(&ts->work_print_info);
 	sec_ts_print_info(ts);
 #ifdef CONFIG_INPUT_SEC_SECURE_TOUCH
 	secure_touch_stop(ts, 1);
@@ -3323,11 +3301,11 @@ static int sec_ts_remove(struct i2c_client *client)
 	ts->shutdown_is_on_going = true;
 	shutdown_is_on_going_tsp = true;
 
-	//sec_ts_ioctl_remove(ts);
+	sec_ts_ioctl_remove(ts);
 
 	disable_irq_nosync(ts->client->irq);
-	//cancel_delayed_work_sync(&ts->work_read_info);
-	//cancel_delayed_work_sync(&ts->work_print_info);
+	cancel_delayed_work_sync(&ts->work_read_info);
+	cancel_delayed_work_sync(&ts->work_print_info);
 	cancel_delayed_work_sync(&ts->work_read_functions);
 	free_irq(ts->client->irq, ts);
 	input_info(true, &ts->client->dev, "%s: irq disabled\n", __func__);
@@ -3339,14 +3317,13 @@ static int sec_ts_remove(struct i2c_client *client)
 	input_info(true, &ts->client->dev, "%s: flush queue\n", __func__);
 
 #endif
-	//sec_ts_fn_remove(ts);
+	sec_ts_fn_remove(ts);
 
 #ifdef CONFIG_TOUCHSCREEN_DUMP_MODE
 	p_ghost_check = NULL;
 #endif
 	device_init_wakeup(&client->dev, false);
-	//wake_lock_destroy(&ts->wakelock);
-	//wakeup_source_destroy(&ts->wakeup_source);
+	wake_lock_destroy(&ts->wakelock);
 
 	ts->lowpower_mode = false;
 	ts->probe_done = false;

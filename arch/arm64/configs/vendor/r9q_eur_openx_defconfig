@@ -8923,7 +8923,7 @@ CONFIG_RAS=y
 #
 # Android
 #
-# CONFIG_ANDROID is not set
+CONFIG_ANDROID=y
 # end of Android
 
 CONFIG_LIBNVDIMM=y
